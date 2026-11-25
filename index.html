@@ -37,6 +37,7 @@
     .player-name-fields input{min-width:0;flex:1;background:#101321;color:var(--text);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font:inherit;font-size:13px;outline:none}
     .player-name-fields input:focus{border-color:var(--cyan);box-shadow:0 0 0 3px #71eadb18}
     .player-name-fields input::placeholder{color:var(--muted)}
+    .player-name-fixed{min-width:0;flex:1;background:#101321;color:var(--muted);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:13px}
     .turn-card{display:flex;align-items:center;justify-content:space-between;gap:12px;background:#101321;border:1px solid var(--line);border-radius:16px;padding:14px 16px;margin-bottom:18px}
     .turn-info{display:flex;align-items:center;gap:12px}
     .turn-symbol{width:38px;height:38px;display:grid;place-items:center;border-radius:12px;background:#71eadb18;color:var(--cyan);font-size:21px;font-weight:700}
@@ -103,9 +104,10 @@
               <option value="easy">Easy</option><option value="smart" selected>Smart</option><option value="unbeatable">Unbeatable</option>
             </select>
           </label>
-          <div class="player-name-fields" id="playerNames" hidden>
-            <input id="player1Name" type="text" maxlength="18" placeholder="Player 1 name (X)" aria-label="Player 1 name" value="Player 1">
-            <input id="player2Name" type="text" maxlength="18" placeholder="Player 2 name (O)" aria-label="Player 2 name" value="Player 2">
+          <div class="player-name-fields" id="playerNames">
+            <div class="player-name-fixed" id="botName" aria-label="Bot, Player 1 (X)">🤖 Bot · Player 1 (X)</div>
+            <input id="player1Name" type="text" maxlength="18" placeholder="Player 1 name (X)" aria-label="Player 1 name" hidden>
+            <input id="player2Name" type="text" maxlength="18" placeholder="Your name (Player 2 · O)" aria-label="Player 2 name">
           </div>
         </div>
         <div class="turn-card" aria-live="polite">
@@ -167,6 +169,7 @@
   let round = 1;
   let scores = loadScores();
   let winningLine = [];
+  let botMoveTimer;
 
   function loadScores() {
     try {
@@ -186,8 +189,8 @@
     $('scoreO').textContent = scores.o;
     $('scoreDraw').textContent = scores.draw;
     $('matchCount').textContent = (scores.x + scores.o + scores.draw) + ' rounds';
-    $('scoreXLabel').textContent = twoPlayers ? playerName('player1Name','Player 1') + ' · X' : 'YOU · X';
-    $('scoreOLabel').textContent = twoPlayers ? playerName('player2Name','Player 2') + ' · O' : 'BOT · O';
+    $('scoreXLabel').textContent = twoPlayers ? playerName('player1Name','Player 1') + ' · X' : 'BOT · X';
+    $('scoreOLabel').textContent = playerName('player2Name','Player 2') + ' · O';
   }
   function setMode(friend) {
     twoPlayers = friend;
@@ -196,7 +199,9 @@
     $('botMode').setAttribute('aria-pressed', String(!friend));
     $('friendMode').setAttribute('aria-pressed', String(friend));
     $('difficultyWrap').hidden = friend;
-    $('playerNames').hidden = !friend;
+    $('botName').hidden = friend;
+    $('player1Name').hidden = !friend;
+    $('player2Name').placeholder = friend ? 'Player 2 name (O)' : 'Your name (Player 2 · O)';
     round = 1;
     scores = {x:0,o:0,draw:0};
     saveScores();
@@ -205,6 +210,7 @@
     $('toast').textContent = friend ? 'Local two-player mode is on.' : 'You are playing against the computer.';
   }
   function resetRound() {
+    window.clearTimeout(botMoveTimer);
     board = Array(9).fill('');
     current = 'X';
     active = true;
@@ -215,12 +221,13 @@
       cell.disabled = false;
       cell.setAttribute('aria-label', 'Empty square ' + (i+1));
     });
-    $('status').textContent = twoPlayers ? playerName('player1Name','Player 1') + "'s turn" : 'Your turn, Player X';
-    $('turnCaption').textContent = 'Make the opening move.';
+    $('status').textContent = twoPlayers ? playerName('player1Name','Player 1') + "'s turn" : 'Bot is thinking…';
+    $('turnCaption').textContent = twoPlayers ? 'Make the opening move.' : 'The bot makes the opening move.';
     $('turnSymbol').textContent = '×';
     $('turnSymbol').style.color = 'var(--cyan)';
     $('roundPill').textContent = 'ROUND ' + String(round).padStart(2,'0');
     $('toast').textContent = '';
+    if (!twoPlayers) startBotTurn();
   }
   function resultFor(position, player) {
     for (const line of wins) {
@@ -243,7 +250,7 @@
       $('turnSymbol').style.color = 'var(--gold)';
     } else {
       scores[player.toLowerCase()]++;
-      const name = player === 'X' ? (twoPlayers ? playerName('player1Name','Player 1') : 'You') : (twoPlayers ? playerName('player2Name','Player 2') : 'The bot');
+      const name = player === 'X' ? (twoPlayers ? playerName('player1Name','Player 1') : 'The bot') : playerName('player2Name','Player 2');
       $('status').textContent = name + ' wins! 🎉';
       $('turnCaption').textContent = 'Three in a row. Nicely played.';
       $('turnSymbol').textContent = player === 'X' ? '×' : '○';
@@ -265,23 +272,25 @@
     if (!board.includes('')) { finish('draw'); return; }
     current = current === 'X' ? 'O' : 'X';
     updateTurn();
-    if (!twoPlayers && current === 'O') {
-      cells.forEach(c => c.disabled = true);
-      $('status').textContent = 'Bot is thinking…';
-      $('turnCaption').textContent = 'Let’s see what it has got.';
-      window.setTimeout(() => {
-        if (!active) return;
-        const move = chooseBotMove();
-        if (move !== null) place(move);
-        else cells.forEach((c,i) => c.disabled = !!board[i] || !active);
-      }, 360);
+    if (!twoPlayers && current === 'X') {
+      startBotTurn();
     } else {
       cells.forEach((c,i) => c.disabled = !!board[i] || !active);
     }
   }
+  function startBotTurn() {
+    cells.forEach(c => c.disabled = true);
+    $('status').textContent = 'Bot is thinking…';
+    $('turnCaption').textContent = 'Let’s see what it has got.';
+    botMoveTimer = window.setTimeout(() => {
+      if (!active || twoPlayers || current !== 'X') return;
+      const move = chooseBotMove();
+      if (move !== null) place(move);
+    }, 360);
+  }
   function updateTurn() {
     const isX = current === 'X';
-    $('status').textContent = twoPlayers ? (isX ? playerName('player1Name','Player 1') + "'s turn" : playerName('player2Name','Player 2') + "'s turn") : (isX ? 'Your turn, Player X' : "Bot's turn, Player O");
+    $('status').textContent = twoPlayers ? (isX ? playerName('player1Name','Player 1') + "'s turn" : playerName('player2Name','Player 2') + "'s turn") : (isX ? "Bot's turn, Player X" : playerName('player2Name','Player 2') + "'s turn");
     $('turnCaption').textContent = 'Choose an empty square.';
     $('turnSymbol').textContent = isX ? '×' : '○';
     $('turnSymbol').style.color = isX ? 'var(--cyan)' : 'var(--pink)';
@@ -291,9 +300,9 @@
     if (!empty.length) return null;
     const level = $('difficulty').value;
     if (level === 'easy') return empty[Math.floor(Math.random()*empty.length)];
-    const immediate = findTacticalMove('O');
+    const immediate = findTacticalMove('X');
     if (immediate !== null) return immediate;
-    const block = findTacticalMove('X');
+    const block = findTacticalMove('O');
     if (block !== null) return block;
     if (level === 'smart') {
       if (board[4] === '') return 4;
@@ -303,7 +312,7 @@
     }
     let best = -Infinity, bestMoves = [];
     for (const move of empty) {
-      board[move] = 'O';
+      board[move] = 'X';
       const value = minimax(board,false,0);
       board[move] = '';
       if (value > best) { best = value; bestMoves = [move]; }
@@ -322,12 +331,12 @@
   }
   function minimax(state, maximizing, depth) {
     const winner = getWinner(state);
-    if (winner === 'O') return 10-depth;
-    if (winner === 'X') return depth-10;
+    if (winner === 'X') return 10-depth;
+    if (winner === 'O') return depth-10;
     if (!state.includes('')) return 0;
     let best = maximizing ? -Infinity : Infinity;
     for (let i=0;i<9;i++) if (state[i] === '') {
-      state[i] = maximizing ? 'O' : 'X';
+      state[i] = maximizing ? 'X' : 'O';
       const score = minimax(state,!maximizing,depth+1);
       state[i] = '';
       best = maximizing ? Math.max(best,score) : Math.min(best,score);
@@ -356,8 +365,14 @@
   $('difficulty').addEventListener('change', () => {
     $('toast').textContent = 'Bot level set to ' + $('difficulty').selectedOptions[0].text + '. Applies from the next bot move.';
   });
-  $('player1Name').addEventListener('input',renderScores);
-  $('player2Name').addEventListener('input',renderScores);
+  $('player1Name').addEventListener('input',() => {
+    renderScores();
+    if (twoPlayers && current === 'X' && active) $('status').textContent = playerName('player1Name','Player 1') + "'s turn";
+  });
+  $('player2Name').addEventListener('input',() => {
+    renderScores();
+    if (current === 'O' && active) $('status').textContent = playerName('player2Name','Player 2') + "'s turn";
+  });
   renderScores();
   resetRound();
 })();
