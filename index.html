@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#10121f" />
+  <meta name="description" content="A polished Tic Tac Toe game. Challenge a clever bot or play head-to-head with a friend." />
+  <title>Tic Tac Toe | The Grid Club</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+    :root{color-scheme:dark;--bg:#10121f;--panel:#191c2d;--panel2:#20243a;--line:rgba(255,255,255,.09);--muted:#9298b1;--text:#f6f7ff;--cyan:#71eadb;--pink:#ff8da9;--gold:#ffd783;--shadow:0 24px 70px rgba(0,0,0,.32)}
+    *{box-sizing:border-box}
+    body{margin:0;min-height:100vh;background:radial-gradient(ellipse at 14% 12%,rgba(113,234,219,.12),transparent 30%),radial-gradient(ellipse at 88% 20%,rgba(255,141,169,.11),transparent 28%),var(--bg);color:var(--text);font-family:'Space Grotesk',sans-serif;padding:32px 18px 44px}
+    button{font:inherit}
+    .shell{width:min(1040px,100%);margin:auto}
+    header{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:28px}
+    .brand{display:flex;align-items:center;gap:12px;font-weight:700;letter-spacing:.02em}
+    .brand-mark{width:38px;height:38px;border-radius:12px;background:linear-gradient(135deg,var(--cyan),#8ba5ff);color:#111522;display:grid;place-items:center;font-weight:700;font-size:20px;box-shadow:0 8px 24px #71eadb30}
+    .eyebrow,.mono{font-family:'DM Mono',monospace;letter-spacing:.12em;text-transform:uppercase}
+    .eyebrow{color:var(--muted);font-size:11px}
+    .header-note{color:var(--muted);font-size:13px}
+    .hero{text-align:center;margin:24px 0 30px}
+    h1{font-size:clamp(38px,6vw,64px);line-height:1;margin:10px 0 12px;letter-spacing:-.06em}
+    h1 span{color:var(--cyan)}
+    .sub{margin:0;color:var(--muted);font-size:15px}
+    .layout{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(270px,.8fr);gap:20px;align-items:start}
+    .panel{background:linear-gradient(160deg,rgba(255,255,255,.045),transparent 55%),var(--panel);border:1px solid var(--line);border-radius:24px;box-shadow:var(--shadow)}
+    .game-panel{padding:24px}
+    .mode-row{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:22px;flex-wrap:wrap}
+    .mode-switch{display:flex;background:#101321;padding:5px;border-radius:14px;border:1px solid var(--line);gap:4px}
+    .mode-btn{border:0;background:transparent;color:var(--muted);padding:10px 14px;border-radius:10px;cursor:pointer;font-size:13px;font-weight:600;transition:.2s}
+    .mode-btn.active{background:var(--panel2);color:var(--text);box-shadow:0 3px 12px #0004}
+    .mode-btn:hover:not(.active){color:var(--text)}
+    .difficulty{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:12px}
+    select{background:#101321;color:var(--text);border:1px solid var(--line);border-radius:10px;padding:9px 11px;outline:none}
+    .turn-card{display:flex;align-items:center;justify-content:space-between;gap:12px;background:#101321;border:1px solid var(--line);border-radius:16px;padding:14px 16px;margin-bottom:18px}
+    .turn-info{display:flex;align-items:center;gap:12px}
+    .turn-symbol{width:38px;height:38px;display:grid;place-items:center;border-radius:12px;background:#71eadb18;color:var(--cyan);font-size:21px;font-weight:700}
+    .turn-title{font-weight:700}
+    .turn-caption{font-size:12px;color:var(--muted);margin-top:2px}
+    .turn-pill{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.1em;color:var(--cyan);background:#71eadb14;border:1px solid #71eadb30;border-radius:999px;padding:7px 10px;white-space:nowrap}
+    .board-wrap{display:grid;place-items:center;padding:2px 0 12px}
+    .board{display:grid;grid-template-columns:repeat(3,min(26vw,112px));grid-template-rows:repeat(3,min(26vw,112px));gap:10px}
+    .cell{border:1px solid rgba(255,255,255,.08);border-radius:18px;background:linear-gradient(145deg,#262a41,#1c2033);color:var(--text);font-size:clamp(38px,7vw,56px);font-weight:700;cursor:pointer;display:grid;place-items:center;transition:transform .16s,border-color .16s,background .16s,box-shadow .16s;min-width:0}
+    .cell:hover:enabled{transform:translateY(-3px);border-color:#71eadb80;box-shadow:0 10px 24px #0003}
+    .cell:disabled{cursor:default}
+    .cell.x{color:var(--cyan);text-shadow:0 0 25px #71eadb50}
+    .cell.o{color:var(--pink);text-shadow:0 0 25px #ff8da950}
+    .cell.win{background:linear-gradient(145deg,#31434a,#243849);border-color:var(--gold);box-shadow:0 0 25px #ffd78322}
+    .actions{display:flex;gap:10px;margin-top:12px}
+    .btn{border:1px solid var(--line);border-radius:12px;padding:12px 16px;cursor:pointer;font-weight:700;font-size:13px;transition:.2s}
+    .btn-primary{background:var(--cyan);color:#111723;border-color:transparent;flex:1}
+    .btn-primary:hover{background:#9af5ea;transform:translateY(-1px)}
+    .btn-quiet{background:#ffffff08;color:var(--text)}
+    .btn-quiet:hover{background:#ffffff12}
+    .side{display:grid;gap:16px}
+    .score-panel{padding:22px}
+    .section-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}
+    .section-head h2{font-size:16px;margin:0}
+    .score-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+    .score-card{background:#101321;border:1px solid var(--line);border-radius:15px;padding:14px 10px;text-align:center}
+    .score-label{font-size:11px;color:var(--muted);margin-bottom:8px}
+    .score-value{font-family:'DM Mono',monospace;font-size:27px;font-weight:500}
+    .score-card.x .score-value{color:var(--cyan)}.score-card.o .score-value{color:var(--pink)}.score-card.draw .score-value{color:var(--gold)}
+    .score-names{display:flex;justify-content:space-between;gap:8px;margin-top:13px;color:var(--muted);font-size:11px}
+    .score-reset{border:0;background:none;color:var(--muted);font-size:11px;cursor:pointer;padding:5px}
+    .score-reset:hover{color:var(--pink)}
+    .how-panel{padding:22px}
+    .how-panel h2{font-size:16px;margin:0 0 14px}
+    .tip{display:flex;gap:11px;margin:12px 0;color:var(--muted);font-size:13px;line-height:1.5}
+    .tip-icon{width:25px;height:25px;flex:0 0 25px;border-radius:8px;background:#ffffff0b;display:grid;place-items:center;color:var(--cyan);font-size:12px}
+    .footnote{text-align:center;color:#717791;font-size:11px;margin-top:25px}
+    .toast{min-height:20px;text-align:center;color:var(--gold);font-size:12px;margin-top:12px}
+    @media(max-width:760px){body{padding:20px 13px 32px}.layout{grid-template-columns:1fr}.hero{margin:30px 0 24px}.game-panel{padding:17px}.side{grid-template-columns:1fr 1fr}.score-panel,.how-panel{padding:18px}.header-note{display:none}}
+    @media(max-width:480px){.side{grid-template-columns:1fr}.mode-row{align-items:flex-start;flex-direction:column}.difficulty{width:100%;justify-content:space-between}.board{grid-template-columns:repeat(3,min(27vw,100px));grid-template-rows:repeat(3,min(27vw,100px));gap:8px}.cell{border-radius:14px}.actions{flex-wrap:wrap}.btn{padding:12px}.turn-card{padding:12px}}
+    button:focus-visible,select:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header>
+      <div class="brand"><div class="brand-mark">×</div><span>THE GRID CLUB</span></div>
+      <div class="header-note">A tiny arena for big rivalries.</div>
+    </header>
+    <section class="hero">
+      <div class="eyebrow">Think fast. Take your shot.</div>
+      <h1>TIC <span>TAC</span> TOE</h1>
+      <p class="sub">One grid. Two sides. Bragging rights on the line.</p>
+    </section>
+    <div class="layout">
+      <section class="panel game-panel" aria-label="Game board">
+        <div class="mode-row">
+          <div class="mode-switch" role="group" aria-label="Game mode">
+            <button class="mode-btn active" id="botMode" type="button" aria-pressed="true">🤖 vs Computer</button>
+            <button class="mode-btn" id="friendMode" type="button" aria-pressed="false">👥 2 Players</button>
+          </div>
+          <label class="difficulty" id="difficultyWrap">Bot level
+            <select id="difficulty" aria-label="Bot difficulty">
+              <option value="easy">Easy</option><option value="smart" selected>Smart</option><option value="unbeatable">Unbeatable</option>
+            </select>
+          </label>
+        </div>
+        <div class="turn-card" aria-live="polite">
+          <div class="turn-info">
+            <div class="turn-symbol" id="turnSymbol">×</div>
+            <div><div class="turn-title" id="status">Your turn, Player X</div><div class="turn-caption" id="turnCaption">Make the opening move.</div></div>
+          </div>
+          <div class="turn-pill" id="roundPill">ROUND 01</div>
+        </div>
+        <div class="board-wrap">
+          <div class="board" id="board" role="group" aria-label="Tic tac toe board">
+            <button class="cell" data-index="0" aria-label="Empty square 1"></button>
+            <button class="cell" data-index="1" aria-label="Empty square 2"></button>
+            <button class="cell" data-index="2" aria-label="Empty square 3"></button>
+            <button class="cell" data-index="3" aria-label="Empty square 4"></button>
+            <button class="cell" data-index="4" aria-label="Empty square 5"></button>
+            <button class="cell" data-index="5" aria-label="Empty square 6"></button>
+            <button class="cell" data-index="6" aria-label="Empty square 7"></button>
+            <button class="cell" data-index="7" aria-label="Empty square 8"></button>
+            <button class="cell" data-index="8" aria-label="Empty square 9"></button>
+          </div>
+        </div>
+        <div class="actions">
+          <button class="btn btn-primary" id="restartBtn" type="button">↻ &nbsp; Restart round</button>
+          <button class="btn btn-quiet" id="newMatchBtn" type="button">New match</button>
+        </div>
+        <div class="toast" id="toast" aria-live="polite"></div>
+      </section>
+      <aside class="side">
+        <section class="panel score-panel">
+          <div class="section-head"><h2>Match scoreboard</h2><button class="score-reset" id="resetScores" type="button">Reset scores ↺</button></div>
+          <div class="score-grid">
+            <div class="score-card x"><div class="score-label" id="scoreXLabel">YOU · X</div><div class="score-value" id="scoreX">0</div></div>
+            <div class="score-card draw"><div class="score-label">DRAWS</div><div class="score-value" id="scoreDraw">0</div></div>
+            <div class="score-card o"><div class="score-label" id="scoreOLabel">BOT · O</div><div class="score-value" id="scoreO">0</div></div>
+          </div>
+          <div class="score-names"><span>Wins are counted automatically</span><span id="matchCount">0 rounds</span></div>
+        </section>
+        <section class="panel how-panel">
+          <h2>How to play</h2>
+          <div class="tip"><span class="tip-icon">01</span><span>Choose your opponent: challenge the bot or pass the device to a friend.</span></div>
+          <div class="tip"><span class="tip-icon">02</span><span>Take turns placing X and O. Get three in a row to win.</span></div>
+          <div class="tip"><span class="tip-icon">03</span><span>Restart a round without losing the scoreboard, or start a new match to clear it.</span></div>
+        </section>
+      </aside>
+    </div>
+    <footer class="footnote">Made for friendly competition. Scores stay saved on this device.</footer>
+  </main>
+<script>
+(() => {
+  const wins = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+  const $ = (id) => document.getElementById(id);
+  const cells = [...document.querySelectorAll('.cell')];
+  const STORAGE_KEY = 'the-grid-club-scores-v1';
+  let board = Array(9).fill('');
+  let current = 'X';
+  let active = true;
+  let twoPlayers = false;
+  let round = 1;
+  let scores = loadScores();
+  let winningLine = [];
+
+  function loadScores() {
+    try {
+      const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
+      if (saved && Number.isInteger(saved.x) && Number.isInteger(saved.o) && Number.isInteger(saved.draw)) {
+        return {x:saved.x,o:saved.o,draw:saved.draw};
+      }
+    } catch (_) {}
+    return {x:0,o:0,draw:0};
+  }
+  function saveScores() {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(scores)); } catch (_) {}
+  }
+  function renderScores() {
+    $('scoreX').textContent = scores.x;
+    $('scoreO').textContent = scores.o;
+    $('scoreDraw').textContent = scores.draw;
+    $('matchCount').textContent = (scores.x + scores.o + scores.draw) + ' rounds';
+    $('scoreXLabel').textContent = twoPlayers ? 'PLAYER 1 · X' : 'YOU · X';
+    $('scoreOLabel').textContent = twoPlayers ? 'PLAYER 2 · O' : 'BOT · O';
+  }
+  function setMode(friend) {
+    twoPlayers = friend;
+    $('botMode').classList.toggle('active', !friend);
+    $('friendMode').classList.toggle('active', friend);
+    $('botMode').setAttribute('aria-pressed', String(!friend));
+    $('friendMode').setAttribute('aria-pressed', String(friend));
+    $('difficultyWrap').hidden = friend;
+    round = 1;
+    scores = {x:0,o:0,draw:0};
+    saveScores();
+    renderScores();
+    resetRound();
+    $('toast').textContent = friend ? 'Local two-player mode is on.' : 'You are playing against the computer.';
+  }
+  function resetRound() {
+    board = Array(9).fill('');
+    current = 'X';
+    active = true;
+    winningLine = [];
+    cells.forEach((cell,i) => {
+      cell.textContent = '';
+      cell.className = 'cell';
+      cell.disabled = false;
+      cell.setAttribute('aria-label', 'Empty square ' + (i+1));
+    });
+    $('status').textContent = twoPlayers ? "Player 1's turn" : 'Your turn, Player X';
+    $('turnCaption').textContent = 'Make the opening move.';
+    $('turnSymbol').textContent = '×';
+    $('turnSymbol').style.color = 'var(--cyan)';
+    $('roundPill').textContent = 'ROUND ' + String(round).padStart(2,'0');
+    $('toast').textContent = '';
+  }
+  function resultFor(position, player) {
+    for (const line of wins) {
+      if (line.includes(position) && line.every(i => board[i] === player)) return line;
+    }
+    return null;
+  }
+  function finish(player, line) {
+    active = false;
+    winningLine = line || [];
+    cells.forEach((cell,i) => {
+      cell.disabled = true;
+      if (winningLine.includes(i)) cell.classList.add('win');
+    });
+    if (player === 'draw') {
+      scores.draw++;
+      $('status').textContent = "It's a draw!";
+      $('turnCaption').textContent = 'A perfectly matched round. Run it back?';
+      $('turnSymbol').textContent = '＝';
+      $('turnSymbol').style.color = 'var(--gold)';
+    } else {
+      scores[player.toLowerCase()]++;
+      const name = player === 'X' ? (twoPlayers ? 'Player 1' : 'You') : (twoPlayers ? 'Player 2' : 'The bot');
+      $('status').textContent = name + ' wins! 🎉';
+      $('turnCaption').textContent = 'Three in a row. Nicely played.';
+      $('turnSymbol').textContent = player === 'X' ? '×' : '○';
+      $('turnSymbol').style.color = player === 'X' ? 'var(--cyan)' : 'var(--pink)';
+    }
+    saveScores();
+    renderScores();
+  }
+  function place(index) {
+    if (!active || board[index]) return;
+    board[index] = current;
+    const cell = cells[index];
+    cell.textContent = current;
+    cell.classList.add(current.toLowerCase());
+    cell.disabled = true;
+    cell.setAttribute('aria-label', 'Square ' + (index+1) + ': ' + current);
+    const line = resultFor(index,current);
+    if (line) { finish(current,line); return; }
+    if (!board.includes('')) { finish('draw'); return; }
+    current = current === 'X' ? 'O' : 'X';
+    updateTurn();
+    if (!twoPlayers && current === 'O') {
+      cells.forEach(c => c.disabled = true);
+      $('status').textContent = 'Bot is thinking…';
+      $('turnCaption').textContent = 'Let’s see what it has got.';
+      window.setTimeout(() => {
+        if (!active) return;
+        const move = chooseBotMove();
+        if (move !== null) place(move);
+        else cells.forEach((c,i) => c.disabled = !!board[i] || !active);
+      }, 360);
+    } else {
+      cells.forEach((c,i) => c.disabled = !!board[i] || !active);
+    }
+  }
+  function updateTurn() {
+    const isX = current === 'X';
+    $('status').textContent = twoPlayers ? (isX ? "Player 1's turn" : "Player 2's turn") : (isX ? 'Your turn, Player X' : "Bot's turn, Player O");
+    $('turnCaption').textContent = 'Choose an empty square.';
+    $('turnSymbol').textContent = isX ? '×' : '○';
+    $('turnSymbol').style.color = isX ? 'var(--cyan)' : 'var(--pink)';
+  }
+  function chooseBotMove() {
+    const empty = board.map((v,i) => v === '' ? i : -1).filter(i => i >= 0);
+    if (!empty.length) return null;
+    const level = $('difficulty').value;
+    if (level === 'easy') return empty[Math.floor(Math.random()*empty.length)];
+    const immediate = findTacticalMove('O');
+    if (immediate !== null) return immediate;
+    const block = findTacticalMove('X');
+    if (block !== null) return block;
+    if (level === 'smart') {
+      if (board[4] === '') return 4;
+      const corners = [0,2,6,8].filter(i => board[i] === '');
+      if (corners.length) return corners[Math.floor(Math.random()*corners.length)];
+      return empty[Math.floor(Math.random()*empty.length)];
+    }
+    let best = -Infinity, bestMoves = [];
+    for (const move of empty) {
+      board[move] = 'O';
+      const value = minimax(board,false,0);
+      board[move] = '';
+      if (value > best) { best = value; bestMoves = [move]; }
+      else if (value === best) bestMoves.push(move);
+    }
+    return bestMoves[Math.floor(Math.random()*bestMoves.length)];
+  }
+  function findTacticalMove(player) {
+    for (const i of board.map((v,i) => v === '' ? i : -1).filter(i => i >= 0)) {
+      board[i] = player;
+      const winsNow = wins.some(line => line.every(index => board[index] === player));
+      board[i] = '';
+      if (winsNow) return i;
+    }
+    return null;
+  }
+  function minimax(state, maximizing, depth) {
+    const winner = getWinner(state);
+    if (winner === 'O') return 10-depth;
+    if (winner === 'X') return depth-10;
+    if (!state.includes('')) return 0;
+    let best = maximizing ? -Infinity : Infinity;
+    for (let i=0;i<9;i++) if (state[i] === '') {
+      state[i] = maximizing ? 'O' : 'X';
+      const score = minimax(state,!maximizing,depth+1);
+      state[i] = '';
+      best = maximizing ? Math.max(best,score) : Math.min(best,score);
+    }
+    return best;
+  }
+  function getWinner(state) {
+    for (const line of wins) {
+      const [a,b,c] = line;
+      if (state[a] && state[a] === state[b] && state[a] === state[c]) return state[a];
+    }
+    return null;
+  }
+  cells.forEach(cell => cell.addEventListener('click', () => place(Number(cell.dataset.index))));
+  $('botMode').addEventListener('click', () => { if (twoPlayers) setMode(false); });
+  $('friendMode').addEventListener('click', () => { if (!twoPlayers) setMode(true); });
+  $('restartBtn').addEventListener('click', () => { round++; resetRound(); });
+  $('newMatchBtn').addEventListener('click', () => {
+    scores = {x:0,o:0,draw:0}; round = 1; saveScores(); renderScores(); resetRound();
+    $('toast').textContent = 'Fresh match. All scores are back to zero.';
+  });
+  $('resetScores').addEventListener('click', () => {
+    scores = {x:0,o:0,draw:0}; saveScores(); renderScores();
+    $('toast').textContent = 'Scoreboard cleared. Current round is still in play.';
+  });
+  $('difficulty').addEventListener('change', () => {
+    $('toast').textContent = 'Bot level set to ' + $('difficulty').selectedOptions[0].text + '. Applies from the next bot move.';
+  });
+  renderScores();
+  resetRound();
+})();
+</script>
+</body>
+</html>
