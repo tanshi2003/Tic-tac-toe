@@ -33,6 +33,10 @@
     .mode-btn:hover:not(.active){color:var(--text)}
     .difficulty{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:12px}
     select{background:#101321;color:var(--text);border:1px solid var(--line);border-radius:10px;padding:9px 11px;outline:none}
+    .player-name-fields{display:flex;gap:8px;flex-basis:100%;width:100%}
+    .player-name-fields input{min-width:0;flex:1;background:#101321;color:var(--text);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font:inherit;font-size:13px;outline:none}
+    .player-name-fields input:focus{border-color:var(--cyan);box-shadow:0 0 0 3px #71eadb18}
+    .player-name-fields input::placeholder{color:var(--muted)}
     .turn-card{display:flex;align-items:center;justify-content:space-between;gap:12px;background:#101321;border:1px solid var(--line);border-radius:16px;padding:14px 16px;margin-bottom:18px}
     .turn-info{display:flex;align-items:center;gap:12px}
     .turn-symbol{width:38px;height:38px;display:grid;place-items:center;border-radius:12px;background:#71eadb18;color:var(--cyan);font-size:21px;font-weight:700}
@@ -72,7 +76,7 @@
     .footnote{text-align:center;color:#717791;font-size:11px;margin-top:25px}
     .toast{min-height:20px;text-align:center;color:var(--gold);font-size:12px;margin-top:12px}
     @media(max-width:760px){body{padding:20px 13px 32px}.layout{grid-template-columns:1fr}.hero{margin:30px 0 24px}.game-panel{padding:17px}.side{grid-template-columns:1fr 1fr}.score-panel,.how-panel{padding:18px}.header-note{display:none}}
-    @media(max-width:480px){.side{grid-template-columns:1fr}.mode-row{align-items:flex-start;flex-direction:column}.difficulty{width:100%;justify-content:space-between}.board{grid-template-columns:repeat(3,min(27vw,100px));grid-template-rows:repeat(3,min(27vw,100px));gap:8px}.cell{border-radius:14px}.actions{flex-wrap:wrap}.btn{padding:12px}.turn-card{padding:12px}}
+    @media(max-width:480px){.side{grid-template-columns:1fr}.mode-row{align-items:flex-start;flex-direction:column}.difficulty{width:100%;justify-content:space-between}.player-name-fields{flex-direction:column}.board{grid-template-columns:repeat(3,min(27vw,100px));grid-template-rows:repeat(3,min(27vw,100px));gap:8px}.cell{border-radius:14px}.actions{flex-wrap:wrap}.btn{padding:12px}.turn-card{padding:12px}}
     button:focus-visible,select:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
   </style>
 </head>
@@ -99,6 +103,10 @@
               <option value="easy">Easy</option><option value="smart" selected>Smart</option><option value="unbeatable">Unbeatable</option>
             </select>
           </label>
+          <div class="player-name-fields" id="playerNames" hidden>
+            <input id="player1Name" type="text" maxlength="18" placeholder="Player 1 name (X)" aria-label="Player 1 name" value="Player 1">
+            <input id="player2Name" type="text" maxlength="18" placeholder="Player 2 name (O)" aria-label="Player 2 name" value="Player 2">
+          </div>
         </div>
         <div class="turn-card" aria-live="polite">
           <div class="turn-info">
@@ -169,6 +177,7 @@
     } catch (_) {}
     return {x:0,o:0,draw:0};
   }
+  function playerName(id,fallback) { return $(id).value.trim() || fallback; }
   function saveScores() {
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify(scores)); } catch (_) {}
   }
@@ -177,8 +186,8 @@
     $('scoreO').textContent = scores.o;
     $('scoreDraw').textContent = scores.draw;
     $('matchCount').textContent = (scores.x + scores.o + scores.draw) + ' rounds';
-    $('scoreXLabel').textContent = twoPlayers ? 'PLAYER 1 · X' : 'YOU · X';
-    $('scoreOLabel').textContent = twoPlayers ? 'PLAYER 2 · O' : 'BOT · O';
+    $('scoreXLabel').textContent = twoPlayers ? playerName('player1Name','Player 1') + ' · X' : 'YOU · X';
+    $('scoreOLabel').textContent = twoPlayers ? playerName('player2Name','Player 2') + ' · O' : 'BOT · O';
   }
   function setMode(friend) {
     twoPlayers = friend;
@@ -187,6 +196,7 @@
     $('botMode').setAttribute('aria-pressed', String(!friend));
     $('friendMode').setAttribute('aria-pressed', String(friend));
     $('difficultyWrap').hidden = friend;
+    $('playerNames').hidden = !friend;
     round = 1;
     scores = {x:0,o:0,draw:0};
     saveScores();
@@ -205,7 +215,7 @@
       cell.disabled = false;
       cell.setAttribute('aria-label', 'Empty square ' + (i+1));
     });
-    $('status').textContent = twoPlayers ? "Player 1's turn" : 'Your turn, Player X';
+    $('status').textContent = twoPlayers ? playerName('player1Name','Player 1') + "'s turn" : 'Your turn, Player X';
     $('turnCaption').textContent = 'Make the opening move.';
     $('turnSymbol').textContent = '×';
     $('turnSymbol').style.color = 'var(--cyan)';
@@ -233,7 +243,7 @@
       $('turnSymbol').style.color = 'var(--gold)';
     } else {
       scores[player.toLowerCase()]++;
-      const name = player === 'X' ? (twoPlayers ? 'Player 1' : 'You') : (twoPlayers ? 'Player 2' : 'The bot');
+      const name = player === 'X' ? (twoPlayers ? playerName('player1Name','Player 1') : 'You') : (twoPlayers ? playerName('player2Name','Player 2') : 'The bot');
       $('status').textContent = name + ' wins! 🎉';
       $('turnCaption').textContent = 'Three in a row. Nicely played.';
       $('turnSymbol').textContent = player === 'X' ? '×' : '○';
@@ -271,7 +281,7 @@
   }
   function updateTurn() {
     const isX = current === 'X';
-    $('status').textContent = twoPlayers ? (isX ? "Player 1's turn" : "Player 2's turn") : (isX ? 'Your turn, Player X' : "Bot's turn, Player O");
+    $('status').textContent = twoPlayers ? (isX ? playerName('player1Name','Player 1') + "'s turn" : playerName('player2Name','Player 2') + "'s turn") : (isX ? 'Your turn, Player X' : "Bot's turn, Player O");
     $('turnCaption').textContent = 'Choose an empty square.';
     $('turnSymbol').textContent = isX ? '×' : '○';
     $('turnSymbol').style.color = isX ? 'var(--cyan)' : 'var(--pink)';
@@ -346,6 +356,8 @@
   $('difficulty').addEventListener('change', () => {
     $('toast').textContent = 'Bot level set to ' + $('difficulty').selectedOptions[0].text + '. Applies from the next bot move.';
   });
+  $('player1Name').addEventListener('input',renderScores);
+  $('player2Name').addEventListener('input',renderScores);
   renderScores();
   resetRound();
 })();
