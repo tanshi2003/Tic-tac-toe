@@ -4,13 +4,13 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#10121f" />
-  <meta name="description" content="A polished Tic Tac Toe game. Challenge a clever bot or play head-to-head with a friend." />
-  <title>Tic Tac Toe | The Grid Club</title>
+  <meta name="description" content="Play Tic Tac Toe against the computer or with a friend." />
+  <title>Tic Tac Toe | Tic Tac Toe</title>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;600;700&display=swap');
-    :root{color-scheme:dark;--bg:#10121f;--panel:#191c2d;--panel2:#20243a;--line:rgba(255,255,255,.09);--muted:#9298b1;--text:#f6f7ff;--cyan:#71eadb;--pink:#ff8da9;--gold:#ffd783;--shadow:0 24px 70px rgba(0,0,0,.32)}
+    
+    :root{color-scheme:dark;--bg:#171a20;--panel:#22262d;--panel2:#2a3038;--line:#ffffff18;--muted:#a5abb4;--text:#f4f4f1;--cyan:#b8d98b;--pink:#d9a2ad;--gold:#e8c77a;--shadow:0 12px 30px rgba(0,0,0,.18)}
     *{box-sizing:border-box}
-    body{margin:0;min-height:100vh;background:radial-gradient(ellipse at 14% 12%,rgba(113,234,219,.12),transparent 30%),radial-gradient(ellipse at 88% 20%,rgba(255,141,169,.11),transparent 28%),var(--bg);color:var(--text);font-family:'Space Grotesk',sans-serif;padding:32px 18px 44px}
+    body{margin:0;min-height:100vh;background:var(--bg);color:var(--text);font-family:'Space Grotesk',sans-serif;padding:32px 18px 44px}
     button{font:inherit}
     .shell{width:min(1040px,100%);margin:auto}
     header{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:28px}
@@ -24,7 +24,7 @@
     h1 span{color:var(--cyan)}
     .sub{margin:0;color:var(--muted);font-size:15px}
     .layout{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(270px,.8fr);gap:20px;align-items:start}
-    .panel{background:linear-gradient(160deg,rgba(255,255,255,.045),transparent 55%),var(--panel);border:1px solid var(--line);border-radius:24px;box-shadow:var(--shadow)}
+    .panel{background:linear-gradient(160deg,rgba(255,255,255,.045),transparent 55%),var(--panel);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow)}
     .game-panel{padding:24px}
     .mode-row{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:22px;flex-wrap:wrap}
     .mode-switch{display:flex;background:#101321;padding:5px;border-radius:14px;border:1px solid var(--line);gap:4px}
@@ -84,13 +84,13 @@
 <body>
   <main class="shell">
     <header>
-      <div class="brand"><div class="brand-mark">×</div><span>THE GRID CLUB</span></div>
-      <div class="header-note">A tiny arena for big rivalries.</div>
+      <div class="brand"><div class="brand-mark">×</div><span>TIC TAC TOE</span></div>
+      
     </header>
     <section class="hero">
-      <div class="eyebrow">Think fast. Take your shot.</div>
-      <h1>TIC <span>TAC</span> TOE</h1>
-      <p class="sub">One grid. Two sides. Bragging rights on the line.</p>
+      
+      <h1>Tic <span>Tac</span> Toe</h1>
+      <p class="sub">Play against the computer or a friend.</p>
     </section>
     <div class="layout">
       <section class="panel game-panel" aria-label="Game board">
@@ -154,7 +154,7 @@
         </section>
       </aside>
     </div>
-    <footer class="footnote">Made for friendly competition. Scores stay saved on this device.</footer>
+    <footer class="footnote">Scores are saved on this device.</footer>
   </main>
 <script>
 (() => {
